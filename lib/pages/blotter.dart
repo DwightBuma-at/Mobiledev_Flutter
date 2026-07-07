@@ -56,8 +56,30 @@ class _BlotterPageState extends State<BlotterPage> {
     final index = _records.indexWhere((item) => item.id == result.id);
     if (index == -1) {
       _records.add(result);
+      StorageService.appendActionLog(
+        module: 'Blotter',
+        action: 'Created',
+        reference: result.caseNo,
+        record: '${result.complainant} vs. ${result.respondent}',
+        details: [
+          ['Incident Type', result.type],
+          ['Status', result.status],
+          ['Submitted By', result.submittedBy],
+        ],
+      );
     } else {
       _records[index] = result;
+      StorageService.appendActionLog(
+        module: 'Blotter',
+        action: 'Updated',
+        reference: result.caseNo,
+        record: '${result.complainant} vs. ${result.respondent}',
+        details: [
+          ['Incident Type', result.type],
+          ['Status', result.status],
+          ['Submitted By', result.submittedBy],
+        ],
+      );
     }
     _save();
   }
@@ -72,7 +94,16 @@ class _BlotterPageState extends State<BlotterPage> {
       danger: true,
     );
     if (!confirmed) return;
+    final removed = _records.where((item) => item.id == id).firstOrNull;
     _records.removeWhere((item) => item.id == id);
+    if (removed != null) {
+      StorageService.appendActionLog(
+        module: 'Blotter',
+        action: 'Deleted',
+        reference: removed.caseNo,
+        record: '${removed.complainant} vs. ${removed.respondent}',
+      );
+    }
     _save();
   }
 
@@ -88,35 +119,45 @@ class _BlotterPageState extends State<BlotterPage> {
       final completedAt = nowIso();
       _replace(item.copyWith(status: 'Completed', completedAt: completedAt));
       _save();
-      StorageService.appendLog(
-        LogModel(
-          key: 'Blotter-${item.id}',
-          id: item.id,
-          date: completedAt,
-          module: 'Blotter',
-          reference: item.caseNo,
-          record: '${item.complainant} vs. ${item.respondent}',
-          result: 'Completed',
-          details: [
-            ['Case Number', item.caseNo],
-            ['Complainant', item.complainant],
-            ['Contact Number', item.contact],
-            ['Respondent', item.respondent],
-            ['Incident Type', item.type],
-            ['Incident Date', item.date],
-            ['Incident Time', item.time],
-            ['Location', item.location],
-            ['Narrative', item.narrative],
-            ['Action Taken', item.actionTaken],
-            ['Submitted By', item.submittedBy],
-            ['Date Completed', completedAt],
-            ['Final Status', 'Completed'],
-          ],
-        ),
+      final log = LogModel(
+        key: 'Blotter-${item.id}',
+        id: item.id,
+        date: completedAt,
+        module: 'Blotter',
+        reference: item.caseNo,
+        record: '${item.complainant} vs. ${item.respondent}',
+        result: 'Completed',
+        details: [
+          ['Case Number', item.caseNo],
+          ['Complainant', item.complainant],
+          ['Contact Number', item.contact],
+          ['Respondent', item.respondent],
+          ['Incident Type', item.type],
+          ['Incident Date', item.date],
+          ['Incident Time', item.time],
+          ['Location', item.location],
+          ['Narrative', item.narrative],
+          ['Action Taken', item.actionTaken],
+          ['Submitted By', item.submittedBy],
+          ['Date Completed', completedAt],
+          ['Final Status', 'Completed'],
+        ],
       );
+      StorageService.appendLog(log);
+      StorageService.appendModuleLog('blotterLogs', log);
       return;
     } else {
       _replace(item.copyWith(status: status));
+      StorageService.appendActionLog(
+        module: 'Blotter',
+        action: 'Status Updated',
+        reference: item.caseNo,
+        record: '${item.complainant} vs. ${item.respondent}',
+        details: [
+          ['Previous Status', item.status],
+          ['New Status', status],
+        ],
+      );
     }
     _save();
   }
@@ -135,99 +176,186 @@ class _BlotterPageState extends State<BlotterPage> {
       );
     showDialog<void>(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: SizedBox(
-          width: 980,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Row(
-                  children: [
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Blotter Logs',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.slate800,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Completed, resolved, and dismissed blotter transactions.',
-                            style: TextStyle(color: AppColors.slate500),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close, color: AppColors.slate400),
-                    ),
-                  ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final selected = <int>{};
+          return StatefulBuilder(
+            builder: (context, setInnerState) {
+              final allSelected =
+                  logs.isNotEmpty && selected.length == logs.length;
+              return Dialog(
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 520),
-                child: SingleChildScrollView(
-                  child: CustomTable(
-                    title: 'Blotter Logs',
-                    showHeader: false,
-                    framed: false,
-                    horizontalMargin: 14,
-                    columnSpacing: 16,
-                    headingRowHeight: 56,
-                    dataRowMinHeight: 58,
-                    dataRowMaxHeight: 64,
-                    emptyText: 'No blotter logs yet.',
-                    columns: const [
-                      'CASE NO.',
-                      'COMPLAINANT',
-                      'RESPONDENT',
-                      'INCIDENT',
-                      'DATE',
-                      'RESULT',
-                      'ACTION',
-                    ],
-                    rows: logs
-                        .map(
-                          (item) => [
-                            Text(item.caseNo),
-                            Text(item.complainant),
-                            Text(item.respondent),
-                            Text(item.type),
-                            Text(
-                              item.completedAt.isEmpty
-                                  ? item.date
-                                  : item.completedAt,
-                              style: const TextStyle(fontSize: 12),
+                child: SizedBox(
+                  width: 1040,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Row(
+                          children: [
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Blotter Logs',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.slate800,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'Completed, resolved, and dismissed blotter transactions.',
+                                    style: TextStyle(color: AppColors.slate500),
+                                  ),
+                                ],
+                              ),
                             ),
-                            const StatusChip(
-                              label: 'Completed',
-                              background: AppColors.emerald100,
-                              foreground: AppColors.emerald700,
+                            CustomButton(
+                              label: 'Delete Records',
+                              icon: Icons.delete_outline,
+                              danger: true,
+                              compact: true,
+                              onPressed: selected.isEmpty
+                                  ? null
+                                  : () => _deleteBlotterLogRecords(selected),
                             ),
-                            _PrintRecordButton(
-                              onPressed: () => _printBlotterRecord(item),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(
+                                Icons.close,
+                                color: AppColors.slate400,
+                              ),
                             ),
                           ],
-                        )
-                        .toList(),
+                        ),
+                      ),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 520),
+                        child: SingleChildScrollView(
+                          child: CustomTable(
+                            title: 'Blotter Logs',
+                            showHeader: false,
+                            framed: false,
+                            horizontalMargin: 14,
+                            columnSpacing: 16,
+                            headingRowHeight: 56,
+                            dataRowMinHeight: 58,
+                            dataRowMaxHeight: 64,
+                            emptyText: 'No blotter logs yet.',
+                            columns: [
+                              '',
+                              'CASE NO.',
+                              'COMPLAINANT',
+                              'RESPONDENT',
+                              'INCIDENT',
+                              'DATE',
+                              'RESULT',
+                              'ACTION',
+                            ],
+                            rows: logs
+                                .map(
+                                  (item) => [
+                                    Checkbox(
+                                      value: selected.contains(item.id),
+                                      onChanged: (checked) {
+                                        setInnerState(() {
+                                          if (checked ?? false) {
+                                            selected.add(item.id);
+                                          } else {
+                                            selected.remove(item.id);
+                                          }
+                                        });
+                                      },
+                                    ),
+                                    Text(item.caseNo),
+                                    Text(item.complainant),
+                                    Text(item.respondent),
+                                    Text(item.type),
+                                    Text(
+                                      item.completedAt.isEmpty
+                                          ? item.date
+                                          : item.completedAt,
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                    const StatusChip(
+                                      label: 'Completed',
+                                      background: AppColors.emerald100,
+                                      foreground: AppColors.emerald700,
+                                    ),
+                                    _PrintRecordButton(
+                                      onPressed: () =>
+                                          _printBlotterRecord(item),
+                                    ),
+                                  ],
+                                )
+                                .toList(),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 0, 24, 18),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: logs.isEmpty
+                                ? null
+                                : () {
+                                    setInnerState(() {
+                                      selected
+                                        ..clear()
+                                        ..addAll(
+                                          allSelected
+                                              ? const <int>[]
+                                              : logs.map((item) => item.id),
+                                        );
+                                    });
+                                  },
+                            icon: Icon(
+                              allSelected
+                                  ? Icons.check_box
+                                  : Icons.check_box_outline_blank,
+                            ),
+                            label: Text(
+                              allSelected ? 'Unselect All' : 'Select All',
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
+              );
+            },
+          );
+        },
       ),
     );
+  }
+
+  Future<void> _deleteBlotterLogRecords(Set<int> ids) async {
+    final confirmed = await showConfirmationModal(
+      context,
+      title: 'Delete Blotter Log Records',
+      message:
+          'Are you sure you want to delete the selected blotter log records?',
+      confirmText: 'Delete Records',
+      danger: true,
+    );
+    if (!confirmed) return;
+    _records.removeWhere((item) => ids.contains(item.id));
+    for (final id in ids) {
+      StorageService.deleteLog('Blotter-$id', moduleCollection: 'blotterLogs');
+    }
+    _save();
+    if (mounted) Navigator.pop(context);
   }
 
   void _printBlotterRecord(BlotterModel item) {
@@ -639,22 +767,18 @@ class _BlotterFormDialogState extends State<_BlotterFormDialog> {
             ),
             SizedBox(
               width: third,
-              child: LabeledTextField(
+              child: LabeledDateField(
                 label: 'Incident Date',
                 controller: date,
                 requiredField: true,
-                hint: 'YYYY-MM-DD',
-                suffixIcon: Icons.calendar_month_outlined,
               ),
             ),
             SizedBox(
               width: third,
-              child: LabeledTextField(
+              child: LabeledTimeField(
                 label: 'Incident Time',
                 controller: time,
                 requiredField: true,
-                hint: 'HH:MM',
-                suffixIcon: Icons.access_time,
               ),
             ),
             SizedBox(

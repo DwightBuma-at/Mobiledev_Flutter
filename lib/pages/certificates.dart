@@ -56,8 +56,30 @@ class _CertificatesPageState extends State<CertificatesPage> {
     final index = _certs.indexWhere((item) => item.id == result.id);
     if (index == -1) {
       _certs.add(result);
+      StorageService.appendActionLog(
+        module: 'Certificate',
+        action: 'Created',
+        reference: result.controlNo,
+        record: '${result.resident} - ${result.docType}',
+        details: [
+          ['Status', result.status],
+          ['Purpose', result.purpose],
+          ['Submitted By', result.submittedBy],
+        ],
+      );
     } else {
       _certs[index] = result;
+      StorageService.appendActionLog(
+        module: 'Certificate',
+        action: 'Updated',
+        reference: result.controlNo,
+        record: '${result.resident} - ${result.docType}',
+        details: [
+          ['Status', result.status],
+          ['Purpose', result.purpose],
+          ['Submitted By', result.submittedBy],
+        ],
+      );
     }
     _save();
   }
@@ -72,7 +94,16 @@ class _CertificatesPageState extends State<CertificatesPage> {
       danger: true,
     );
     if (!confirmed) return;
+    final removed = _certs.where((item) => item.id == id).firstOrNull;
     _certs.removeWhere((item) => item.id == id);
+    if (removed != null) {
+      StorageService.appendActionLog(
+        module: 'Certificate',
+        action: 'Deleted',
+        reference: removed.controlNo,
+        record: '${removed.resident} - ${removed.docType}',
+      );
+    }
     _save();
   }
 
@@ -88,30 +119,40 @@ class _CertificatesPageState extends State<CertificatesPage> {
       final claimedAt = nowIso();
       _replace(item.copyWith(status: 'Claimed', claimedAt: claimedAt));
       _save();
-      StorageService.appendLog(
-        LogModel(
-          key: 'Certificate-${item.id}',
-          id: item.id,
-          date: claimedAt,
-          module: 'Certificate',
-          reference: item.controlNo,
-          record: '${item.resident} - ${item.docType}',
-          result: 'Claimed',
-          details: [
-            ['Control Number', item.controlNo],
-            ['Resident Name', item.resident],
-            ['Document Type', item.docType],
-            ['Request Date', item.date],
-            ['Purpose', item.purpose],
-            ['Submitted By', item.submittedBy],
-            ['Date Claimed', claimedAt],
-            ['Final Status', 'Claimed'],
-          ],
-        ),
+      final log = LogModel(
+        key: 'Certificate-${item.id}',
+        id: item.id,
+        date: claimedAt,
+        module: 'Certificate',
+        reference: item.controlNo,
+        record: '${item.resident} - ${item.docType}',
+        result: 'Claimed',
+        details: [
+          ['Control Number', item.controlNo],
+          ['Resident Name', item.resident],
+          ['Document Type', item.docType],
+          ['Request Date', item.date],
+          ['Purpose', item.purpose],
+          ['Submitted By', item.submittedBy],
+          ['Date Claimed', claimedAt],
+          ['Final Status', 'Claimed'],
+        ],
       );
+      StorageService.appendLog(log);
+      StorageService.appendModuleLog('certificateLogs', log);
       return;
     } else {
       _replace(item.copyWith(status: status));
+      StorageService.appendActionLog(
+        module: 'Certificate',
+        action: 'Status Updated',
+        reference: item.controlNo,
+        record: '${item.resident} - ${item.docType}',
+        details: [
+          ['Previous Status', item.status],
+          ['New Status', status],
+        ],
+      );
     }
     _save();
   }
@@ -130,94 +171,181 @@ class _CertificatesPageState extends State<CertificatesPage> {
       );
     showDialog<void>(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: SizedBox(
-          width: 920,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Row(
+      builder: (context) {
+        final selected = <int>{};
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final allSelected =
+                logs.isNotEmpty && selected.length == logs.length;
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: SizedBox(
+                width: 980,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Row(
                         children: [
-                          Text(
-                            'Certificate Logs',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.slate800,
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Certificate Logs',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.slate800,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Claimed and released certificate transactions.',
+                                  style: TextStyle(color: AppColors.slate500),
+                                ),
+                              ],
                             ),
                           ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Claimed and released certificate transactions.',
-                            style: TextStyle(color: AppColors.slate500),
+                          CustomButton(
+                            label: 'Delete Records',
+                            icon: Icons.delete_outline,
+                            danger: true,
+                            compact: true,
+                            onPressed: selected.isEmpty
+                                ? null
+                                : () => _deleteCertificateLogRecords(selected),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(
+                              Icons.close,
+                              color: AppColors.slate400,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close, color: AppColors.slate400),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 520),
+                      child: SingleChildScrollView(
+                        child: CustomTable(
+                          title: 'Certificate Logs',
+                          showHeader: false,
+                          framed: false,
+                          horizontalMargin: 18,
+                          columnSpacing: 18,
+                          headingRowHeight: 56,
+                          dataRowMinHeight: 58,
+                          dataRowMaxHeight: 72,
+                          emptyText: 'No certificate logs yet.',
+                          columns: const [
+                            '',
+                            'CONTROL NO.',
+                            'RESIDENT',
+                            'DOCUMENT',
+                            'REQUEST DATE',
+                            'PURPOSE',
+                            'RESULT',
+                            'ACTION',
+                          ],
+                          rows: logs
+                              .map(
+                                (item) => [
+                                  Checkbox(
+                                    value: selected.contains(item.id),
+                                    onChanged: (checked) {
+                                      setDialogState(() {
+                                        if (checked ?? false) {
+                                          selected.add(item.id);
+                                        } else {
+                                          selected.remove(item.id);
+                                        }
+                                      });
+                                    },
+                                  ),
+                                  Text(item.controlNo),
+                                  Text(item.resident),
+                                  Text(item.docType),
+                                  Text(item.date),
+                                  Text(item.purpose),
+                                  const StatusChip(
+                                    label: 'Claimed',
+                                    background: AppColors.emerald100,
+                                    foreground: AppColors.emerald700,
+                                  ),
+                                  _PrintRecordButton(
+                                    onPressed: () => _printCertRecord(item),
+                                  ),
+                                ],
+                              )
+                              .toList(),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 18),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: logs.isEmpty
+                              ? null
+                              : () {
+                                  setDialogState(() {
+                                    selected
+                                      ..clear()
+                                      ..addAll(
+                                        allSelected
+                                            ? const <int>[]
+                                            : logs.map((item) => item.id),
+                                      );
+                                  });
+                                },
+                          icon: Icon(
+                            allSelected
+                                ? Icons.check_box
+                                : Icons.check_box_outline_blank,
+                          ),
+                          label: Text(
+                            allSelected ? 'Unselect All' : 'Select All',
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 520),
-                child: SingleChildScrollView(
-                  child: CustomTable(
-                    title: 'Certificate Logs',
-                    showHeader: false,
-                    framed: false,
-                    horizontalMargin: 18,
-                    columnSpacing: 18,
-                    headingRowHeight: 56,
-                    dataRowMinHeight: 58,
-                    dataRowMaxHeight: 72,
-                    emptyText: 'No certificate logs yet.',
-                    columns: const [
-                      'CONTROL NO.',
-                      'RESIDENT',
-                      'DOCUMENT',
-                      'REQUEST DATE',
-                      'PURPOSE',
-                      'RESULT',
-                      'ACTION',
-                    ],
-                    rows: logs
-                        .map(
-                          (item) => [
-                            Text(item.controlNo),
-                            Text(item.resident),
-                            Text(item.docType),
-                            Text(item.date),
-                            Text(item.purpose),
-                            const StatusChip(
-                              label: 'Claimed',
-                              background: AppColors.emerald100,
-                              foreground: AppColors.emerald700,
-                            ),
-                            _PrintRecordButton(
-                              onPressed: () => _printCertRecord(item),
-                            ),
-                          ],
-                        )
-                        .toList(),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
+  }
+
+  Future<void> _deleteCertificateLogRecords(Set<int> ids) async {
+    final confirmed = await showConfirmationModal(
+      context,
+      title: 'Delete Certificate Log Records',
+      message:
+          'Are you sure you want to delete the selected certificate log records?',
+      confirmText: 'Delete Records',
+      danger: true,
+    );
+    if (!confirmed) return;
+    _certs.removeWhere((item) => ids.contains(item.id));
+    for (final id in ids) {
+      StorageService.deleteLog(
+        'Certificate-$id',
+        moduleCollection: 'certificateLogs',
+      );
+    }
+    _save();
+    if (mounted) Navigator.pop(context);
   }
 
   void _printCertRecord(CertificateModel item) {
@@ -461,7 +589,7 @@ class _CertificateFormDialogState extends State<_CertificateFormDialog> {
     super.initState();
     final cert = widget.existing;
     resident = TextEditingController(text: cert?.resident ?? '');
-    date = TextEditingController(text: cert?.date ?? _longToday());
+    date = TextEditingController(text: cert?.date ?? todayIso());
     purpose = TextEditingController(text: cert?.purpose ?? '');
     docType = cert?.docType ?? '';
     status = cert?.status ?? 'Pending';
@@ -535,11 +663,7 @@ class _CertificateFormDialogState extends State<_CertificateFormDialog> {
             ),
             const SizedBox(height: 20),
             _grid([
-              LabeledTextField(
-                label: 'Request Date',
-                controller: date,
-                readOnly: true,
-              ),
+              LabeledDateField(label: 'Request Date', controller: date),
               LabeledDropdown(
                 label: 'Status',
                 value: status,
@@ -581,24 +705,5 @@ class _CertificateFormDialogState extends State<_CertificateFormDialog> {
         );
       },
     );
-  }
-
-  String _longToday() {
-    final now = DateTime.now();
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-    return '${months[now.month - 1]} ${now.day}, ${now.year}';
   }
 }

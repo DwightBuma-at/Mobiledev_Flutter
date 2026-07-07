@@ -39,6 +39,7 @@ class LabeledTextField extends StatelessWidget {
     this.obscureText = false,
     this.suffixIcon,
     this.helperText,
+    this.onTap,
   });
 
   final String label;
@@ -51,6 +52,7 @@ class LabeledTextField extends StatelessWidget {
   final bool obscureText;
   final IconData? suffixIcon;
   final String? helperText;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +64,7 @@ class LabeledTextField extends StatelessWidget {
         TextFormField(
           controller: controller,
           readOnly: readOnly,
+          onTap: onTap,
           obscureText: obscureText,
           maxLines: maxLines,
           keyboardType: keyboardType,
@@ -83,6 +86,110 @@ class LabeledTextField extends StatelessWidget {
       ],
     );
   }
+}
+
+class LabeledDateField extends StatelessWidget {
+  const LabeledDateField({
+    super.key,
+    required this.label,
+    required this.controller,
+    this.requiredField = false,
+    this.firstDate,
+    this.lastDate,
+  });
+
+  final String label;
+  final TextEditingController controller;
+  final bool requiredField;
+  final DateTime? firstDate;
+  final DateTime? lastDate;
+
+  @override
+  Widget build(BuildContext context) {
+    return LabeledTextField(
+      label: label,
+      controller: controller,
+      requiredField: requiredField,
+      readOnly: true,
+      hint: 'Select date',
+      suffixIcon: Icons.calendar_month_outlined,
+      onTap: () => _pickDate(context),
+    );
+  }
+
+  Future<void> _pickDate(BuildContext context) async {
+    final today = DateTime.now();
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: _parseDate(controller.text) ?? today,
+      firstDate: firstDate ?? DateTime(today.year - 120),
+      lastDate: lastDate ?? DateTime(today.year + 20),
+    );
+    if (selected == null) return;
+    controller.text = _formatDate(selected);
+  }
+}
+
+class LabeledTimeField extends StatelessWidget {
+  const LabeledTimeField({
+    super.key,
+    required this.label,
+    required this.controller,
+    this.requiredField = false,
+  });
+
+  final String label;
+  final TextEditingController controller;
+  final bool requiredField;
+
+  @override
+  Widget build(BuildContext context) {
+    return LabeledTextField(
+      label: label,
+      controller: controller,
+      requiredField: requiredField,
+      readOnly: true,
+      hint: 'Select time',
+      suffixIcon: Icons.access_time,
+      onTap: () => _pickTime(context),
+    );
+  }
+
+  Future<void> _pickTime(BuildContext context) async {
+    final selected = await showTimePicker(
+      context: context,
+      initialTime: _parseTime(controller.text) ?? TimeOfDay.now(),
+    );
+    if (selected == null || !context.mounted) return;
+    controller.text = _formatTime(context, selected);
+  }
+}
+
+DateTime? _parseDate(String value) {
+  if (value.trim().isEmpty) return null;
+  return DateTime.tryParse(value.trim());
+}
+
+TimeOfDay? _parseTime(String value) {
+  final parts = value.trim().split(':');
+  if (parts.length < 2) return null;
+  final hour = int.tryParse(parts[0]);
+  final minute = int.tryParse(parts[1]);
+  if (hour == null || minute == null) return null;
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+  return TimeOfDay(hour: hour, minute: minute);
+}
+
+String _formatDate(DateTime date) {
+  final month = date.month.toString().padLeft(2, '0');
+  final day = date.day.toString().padLeft(2, '0');
+  return '${date.year}-$month-$day';
+}
+
+String _formatTime(BuildContext context, TimeOfDay time) {
+  return MaterialLocalizations.of(
+    context,
+  ).formatTimeOfDay(time, alwaysUse24HourFormat: true);
 }
 
 class LabeledDropdown extends StatelessWidget {

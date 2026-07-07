@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "663672279262",
+    "project_id": "flutter-anino",
+    "storage_bucket": "flutter-anino.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:663672279262:android:72f72d5aede5002e55b24f",
+        "android_client_info": {
+          "package_name": "com.example.barangay_management_flutter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDAFQG3Y7nXVDAm28TkwiMfDn8uXQ6Jr_M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -56,8 +56,30 @@ class _EventsPageState extends State<EventsPage> {
     final index = _events.indexWhere((item) => item.id == result.id);
     if (index == -1) {
       _events.add(result);
+      StorageService.appendActionLog(
+        module: 'Event',
+        action: 'Created',
+        reference: _eventReference(result),
+        record: result.title,
+        details: [
+          ['Event Type', result.type],
+          ['Schedule', '${result.date} ${result.time}'],
+          ['Venue', result.venue],
+        ],
+      );
     } else {
       _events[index] = result;
+      StorageService.appendActionLog(
+        module: 'Event',
+        action: 'Updated',
+        reference: _eventReference(result),
+        record: result.title,
+        details: [
+          ['Event Type', result.type],
+          ['Schedule', '${result.date} ${result.time}'],
+          ['Venue', result.venue],
+        ],
+      );
     }
     _save();
   }
@@ -71,7 +93,16 @@ class _EventsPageState extends State<EventsPage> {
       danger: true,
     );
     if (!confirmed) return;
+    final removed = _events.where((item) => item.id == id).firstOrNull;
     _events.removeWhere((item) => item.id == id);
+    if (removed != null) {
+      StorageService.appendActionLog(
+        module: 'Event',
+        action: 'Deleted',
+        reference: _eventReference(removed),
+        record: removed.title,
+      );
+    }
     _save();
   }
 
@@ -90,29 +121,29 @@ class _EventsPageState extends State<EventsPage> {
     final index = _events.indexWhere((e) => e.id == item.id);
     if (index != -1) _events[index] = replacement;
     _save();
-    StorageService.appendLog(
-      LogModel(
-        key: 'Event-${item.id}',
-        id: item.id,
-        date: completedAt,
-        module: 'Event',
-        reference: 'EVT-${'${item.id}'.substring('${item.id}'.length - 4)}',
-        record: item.title,
-        result: 'Completed',
-        details: [
-          ['Event Title', item.title],
-          ['Event Type', item.type],
-          ['Organizer', item.organizer],
-          ['Event Date', item.date],
-          ['Event Time', item.time],
-          ['Venue', item.venue],
-          ['Date and Time Posted', item.postedAt],
-          ['Date Completed', completedAt],
-          ['Description', item.description],
-          ['Final Status', 'Completed'],
-        ],
-      ),
+    final log = LogModel(
+      key: 'Event-${item.id}',
+      id: item.id,
+      date: completedAt,
+      module: 'Event',
+      reference: _eventReference(item),
+      record: item.title,
+      result: 'Completed',
+      details: [
+        ['Event Title', item.title],
+        ['Event Type', item.type],
+        ['Organizer', item.organizer],
+        ['Event Date', item.date],
+        ['Event Time', item.time],
+        ['Venue', item.venue],
+        ['Date and Time Posted', item.postedAt],
+        ['Date Completed', completedAt],
+        ['Description', item.description],
+        ['Final Status', 'Completed'],
+      ],
     );
+    StorageService.appendLog(log);
+    StorageService.appendModuleLog('eventLogs', log);
   }
 
   void _showLogs() {
@@ -124,99 +155,181 @@ class _EventsPageState extends State<EventsPage> {
       );
     showDialog<void>(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: SizedBox(
-          width: 920,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Row(
+      builder: (context) {
+        final selected = <int>{};
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final allSelected =
+                logs.isNotEmpty && selected.length == logs.length;
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: SizedBox(
+                width: 980,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Row(
                         children: [
-                          Text(
-                            'Event Logs',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.slate800,
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Event Logs',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.slate800,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Completed barangay event transactions.',
+                                  style: TextStyle(color: AppColors.slate500),
+                                ),
+                              ],
                             ),
                           ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Completed barangay event transactions.',
-                            style: TextStyle(color: AppColors.slate500),
+                          CustomButton(
+                            label: 'Delete Records',
+                            icon: Icons.delete_outline,
+                            danger: true,
+                            compact: true,
+                            onPressed: selected.isEmpty
+                                ? null
+                                : () => _deleteEventLogRecords(selected),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(
+                              Icons.close,
+                              color: AppColors.slate400,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close, color: AppColors.slate400),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 520),
+                      child: SingleChildScrollView(
+                        child: CustomTable(
+                          title: 'Event Logs',
+                          showHeader: false,
+                          framed: false,
+                          horizontalMargin: 18,
+                          columnSpacing: 20,
+                          headingRowHeight: 56,
+                          dataRowMinHeight: 58,
+                          dataRowMaxHeight: 64,
+                          emptyText: 'No event logs yet.',
+                          columns: const [
+                            '',
+                            'REFERENCE',
+                            'EVENT',
+                            'TYPE',
+                            'SCHEDULE',
+                            'VENUE',
+                            'RESULT',
+                            'ACTION',
+                          ],
+                          rows: logs
+                              .map(
+                                (item) => [
+                                  Checkbox(
+                                    value: selected.contains(item.id),
+                                    onChanged: (checked) {
+                                      setDialogState(() {
+                                        if (checked ?? false) {
+                                          selected.add(item.id);
+                                        } else {
+                                          selected.remove(item.id);
+                                        }
+                                      });
+                                    },
+                                  ),
+                                  Text(_eventReference(item)),
+                                  Text(item.title),
+                                  Text(item.type),
+                                  Text(
+                                    '${item.date}\n${item.time}',
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                  Text(item.venue),
+                                  const StatusChip(
+                                    label: 'Completed',
+                                    background: AppColors.emerald100,
+                                    foreground: AppColors.emerald700,
+                                  ),
+                                  _PrintRecordButton(
+                                    onPressed: () => _printEventRecord(item),
+                                  ),
+                                ],
+                              )
+                              .toList(),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 18),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: logs.isEmpty
+                              ? null
+                              : () {
+                                  setDialogState(() {
+                                    selected
+                                      ..clear()
+                                      ..addAll(
+                                        allSelected
+                                            ? const <int>[]
+                                            : logs.map((item) => item.id),
+                                      );
+                                  });
+                                },
+                          icon: Icon(
+                            allSelected
+                                ? Icons.check_box
+                                : Icons.check_box_outline_blank,
+                          ),
+                          label: Text(
+                            allSelected ? 'Unselect All' : 'Select All',
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 520),
-                child: SingleChildScrollView(
-                  child: CustomTable(
-                    title: 'Event Logs',
-                    showHeader: false,
-                    framed: false,
-                    horizontalMargin: 18,
-                    columnSpacing: 20,
-                    headingRowHeight: 56,
-                    dataRowMinHeight: 58,
-                    dataRowMaxHeight: 64,
-                    emptyText: 'No event logs yet.',
-                    columns: const [
-                      'REFERENCE',
-                      'EVENT',
-                      'TYPE',
-                      'SCHEDULE',
-                      'VENUE',
-                      'RESULT',
-                      'ACTION',
-                    ],
-                    rows: logs
-                        .map(
-                          (item) => [
-                            Text(
-                              'EVT-${'${item.id}'.substring('${item.id}'.length - 4)}',
-                            ),
-                            Text(item.title),
-                            Text(item.type),
-                            Text(
-                              '${item.date}\n${item.time}',
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                            Text(item.venue),
-                            const StatusChip(
-                              label: 'Completed',
-                              background: AppColors.emerald100,
-                              foreground: AppColors.emerald700,
-                            ),
-                            _PrintRecordButton(
-                              onPressed: () => _printEventRecord(item),
-                            ),
-                          ],
-                        )
-                        .toList(),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
+  }
+
+  Future<void> _deleteEventLogRecords(Set<int> ids) async {
+    final confirmed = await showConfirmationModal(
+      context,
+      title: 'Delete Event Log Records',
+      message:
+          'Are you sure you want to delete the selected event log records?',
+      confirmText: 'Delete Records',
+      danger: true,
+    );
+    if (!confirmed) return;
+    _events.removeWhere((item) => ids.contains(item.id));
+    for (final id in ids) {
+      StorageService.deleteLog('Event-$id', moduleCollection: 'eventLogs');
+    }
+    _save();
+    if (mounted) Navigator.pop(context);
   }
 
   void _printEventRecord(EventModel item) {
@@ -554,19 +667,15 @@ class _EventFormDialogState extends State<_EventFormDialog> {
             const SizedBox(height: 24),
             const FormSectionTitle('Schedule & Location'),
             _grid([
-              LabeledTextField(
+              LabeledDateField(
                 label: 'Date',
                 controller: date,
                 requiredField: true,
-                hint: 'dd/mm/yyyy',
-                suffixIcon: Icons.calendar_month_outlined,
               ),
-              LabeledTextField(
+              LabeledTimeField(
                 label: 'Time',
                 controller: time,
                 requiredField: true,
-                hint: 'HH:MM',
-                suffixIcon: Icons.access_time,
               ),
               LabeledTextField(
                 label: 'Venue',

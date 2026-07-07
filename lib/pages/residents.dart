@@ -59,8 +59,30 @@ class _ResidentsPageState extends State<ResidentsPage> {
     final index = _residents.indexWhere((item) => item.id == result.id);
     if (index == -1) {
       _residents.add(result);
+      StorageService.appendActionLog(
+        module: 'Resident',
+        action: 'Created',
+        reference: '${result.id}',
+        record: result.fullName,
+        details: [
+          ['Username', result.username],
+          ['Purok', result.purok],
+          ['Status', result.residentStatus],
+        ],
+      );
     } else {
       _residents[index] = result;
+      StorageService.appendActionLog(
+        module: 'Resident',
+        action: 'Updated',
+        reference: '${result.id}',
+        record: result.fullName,
+        details: [
+          ['Username', result.username],
+          ['Purok', result.purok],
+          ['Status', result.residentStatus],
+        ],
+      );
     }
     _save();
   }
@@ -75,7 +97,16 @@ class _ResidentsPageState extends State<ResidentsPage> {
       danger: true,
     );
     if (!confirmed) return;
+    final removed = _residents.where((item) => item.id == id).firstOrNull;
     _residents.removeWhere((item) => item.id == id);
+    if (removed != null) {
+      StorageService.appendActionLog(
+        module: 'Resident',
+        action: 'Deleted',
+        reference: '$id',
+        record: removed.fullName,
+      );
+    }
     _save();
   }
 
@@ -371,13 +402,10 @@ class _ResidentFormDialogState extends State<_ResidentFormDialog> {
                 items: const ['', 'Male', 'Female'],
                 onChanged: (v) => setState(() => gender = v ?? ''),
               ),
-              LabeledTextField(
+              LabeledDateField(
                 label: 'Birth Date',
                 controller: birthDate,
                 requiredField: true,
-                hint: 'YYYY-MM-DD',
-                helperText: 'Format: YYYY-MM-DD',
-                suffixIcon: Icons.calendar_month_outlined,
               ),
               LabeledDropdown(
                 label: 'Civil Status',

@@ -6,6 +6,7 @@ import '../routes/app_routes.dart';
 import '../services/storage_service.dart';
 import '../widgets/app_header.dart';
 import '../widgets/app_shell.dart';
+import '../widgets/confirmation_modal.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_table.dart';
 import '../widgets/form_widgets.dart';
@@ -51,6 +52,30 @@ class _ResidentCertificatesPageState extends State<ResidentCertificatesPage> {
     );
     if (result == null) return;
     _save([..._certs, result]);
+    StorageService.appendActionLog(
+      module: 'Certificate',
+      action: 'Submitted',
+      reference: result.controlNo,
+      record: '${result.resident} - ${result.docType}',
+      actor: 'Resident Portal',
+      details: [
+        ['Resident', result.residentName],
+        ['Document Type', result.docType],
+        ['Status', result.status],
+      ],
+    );
+  }
+
+  Future<void> _cancelRequest(CertificateModel item) async {
+    final confirmed = await showConfirmationModal(
+      context,
+      title: 'Cancel Certificate Request',
+      message: 'Are you sure you want to cancel this certificate request?',
+      confirmText: 'Cancel Request',
+      danger: true,
+    );
+    if (!confirmed) return;
+    _save(_certs.where((cert) => cert.id != item.id).toList());
   }
 
   @override
@@ -80,7 +105,13 @@ class _ResidentCertificatesPageState extends State<ResidentCertificatesPage> {
           CustomTable(
             title: 'My Certificate Requests',
             emptyText: 'No certificate requests submitted yet.',
-            columns: const ['Control No.', 'Document', 'Date', 'Status'],
+            columns: const [
+              'Control No.',
+              'Document',
+              'Date',
+              'Status',
+              'Action',
+            ],
             rows: mine
                 .map(
                   (item) => [
@@ -101,6 +132,21 @@ class _ResidentCertificatesPageState extends State<ResidentCertificatesPage> {
                       foreground: item.isClaimed
                           ? AppColors.emerald700
                           : AppColors.blue700,
+                    ),
+                    IconButton(
+                      tooltip: item.isClaimed
+                          ? 'Claimed requests cannot be cancelled'
+                          : 'Cancel request',
+                      icon: Icon(
+                        Icons.delete_outline,
+                        color: item.isClaimed
+                            ? AppColors.slate400
+                            : AppColors.red600,
+                        size: 18,
+                      ),
+                      onPressed: item.isClaimed
+                          ? null
+                          : () => _cancelRequest(item),
                     ),
                   ],
                 )

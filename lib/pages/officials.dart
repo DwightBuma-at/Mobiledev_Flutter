@@ -54,8 +54,30 @@ class _OfficialsPageState extends State<OfficialsPage> {
     final index = _officials.indexWhere((item) => item.id == result.id);
     if (index == -1) {
       _officials.add(result);
+      StorageService.appendActionLog(
+        module: 'Official',
+        action: 'Created',
+        reference: '${result.id}',
+        record: result.name,
+        details: [
+          ['Position', result.position],
+          ['Committee', result.committee],
+          ['Status', result.status],
+        ],
+      );
     } else {
       _officials[index] = result;
+      StorageService.appendActionLog(
+        module: 'Official',
+        action: 'Updated',
+        reference: '${result.id}',
+        record: result.name,
+        details: [
+          ['Position', result.position],
+          ['Committee', result.committee],
+          ['Status', result.status],
+        ],
+      );
     }
     _save();
   }
@@ -69,7 +91,16 @@ class _OfficialsPageState extends State<OfficialsPage> {
       danger: true,
     );
     if (!confirmed) return;
+    final removed = _officials.where((item) => item.id == id).firstOrNull;
     _officials.removeWhere((item) => item.id == id);
+    if (removed != null) {
+      StorageService.appendActionLog(
+        module: 'Official',
+        action: 'Deleted',
+        reference: '$id',
+        record: removed.name,
+      );
+    }
     _save();
   }
 
@@ -332,17 +363,15 @@ class _OfficialFormDialogState extends State<_OfficialFormDialog> {
                 hint: '09XXXXXXXXX',
               ),
               LabeledTextField(label: 'Email', controller: email),
-              LabeledTextField(
+              LabeledDateField(
                 label: 'Term Start',
                 controller: termStart,
                 requiredField: true,
-                hint: 'YYYY-MM-DD',
               ),
-              LabeledTextField(
+              LabeledDateField(
                 label: 'Term End',
                 controller: termEnd,
                 requiredField: true,
-                hint: 'YYYY-MM-DD',
               ),
               LabeledDropdown(
                 label: 'Status',

@@ -43,6 +43,16 @@ class _LandingPageState extends State<LandingPage> {
       return;
     }
 
+    setState(() {
+      _loading = true;
+      _loadingText = 'Checking resident account...';
+    });
+    await StorageService.ensureReady().timeout(
+      const Duration(seconds: 5),
+      onTimeout: () {},
+    );
+    if (!mounted) return;
+
     ResidentModel? resident;
     for (final item in StorageService.residents()) {
       if (item.username == username && item.password == password) {
@@ -61,6 +71,7 @@ class _LandingPageState extends State<LandingPage> {
     }
 
     if (!mounted) return;
+    setState(() => _loading = false);
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(

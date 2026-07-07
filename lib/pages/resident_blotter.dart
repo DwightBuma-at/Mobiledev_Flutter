@@ -6,6 +6,7 @@ import '../routes/app_routes.dart';
 import '../services/storage_service.dart';
 import '../widgets/app_header.dart';
 import '../widgets/app_shell.dart';
+import '../widgets/confirmation_modal.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_table.dart';
 import '../widgets/form_widgets.dart';
@@ -50,6 +51,30 @@ class _ResidentBlotterPageState extends State<ResidentBlotterPage> {
     );
     if (result == null) return;
     _save([..._records, result]);
+    StorageService.appendActionLog(
+      module: 'Blotter',
+      action: 'Submitted',
+      reference: result.caseNo,
+      record: '${result.complainant} vs. ${result.respondent}',
+      actor: 'Resident Portal',
+      details: [
+        ['Resident', result.residentName],
+        ['Incident Type', result.type],
+        ['Status', result.status],
+      ],
+    );
+  }
+
+  Future<void> _cancelReport(BlotterModel item) async {
+    final confirmed = await showConfirmationModal(
+      context,
+      title: 'Cancel Blotter Report',
+      message: 'Are you sure you want to cancel this blotter report?',
+      confirmText: 'Cancel Report',
+      danger: true,
+    );
+    if (!confirmed) return;
+    _save(_records.where((record) => record.id != item.id).toList());
   }
 
   @override
@@ -79,7 +104,7 @@ class _ResidentBlotterPageState extends State<ResidentBlotterPage> {
           CustomTable(
             title: 'My Blotter Reports',
             emptyText: 'No blotter reports submitted yet.',
-            columns: const ['Case No.', 'Incident', 'Date', 'Status'],
+            columns: const ['Case No.', 'Incident', 'Date', 'Status', 'Action'],
             rows: mine
                 .map(
                   (item) => [
@@ -100,6 +125,21 @@ class _ResidentBlotterPageState extends State<ResidentBlotterPage> {
                       foreground: item.isCompleted
                           ? AppColors.emerald700
                           : AppColors.amber700,
+                    ),
+                    IconButton(
+                      tooltip: item.isCompleted
+                          ? 'Completed reports cannot be cancelled'
+                          : 'Cancel report',
+                      icon: Icon(
+                        Icons.delete_outline,
+                        color: item.isCompleted
+                            ? AppColors.slate400
+                            : AppColors.red600,
+                        size: 18,
+                      ),
+                      onPressed: item.isCompleted
+                          ? null
+                          : () => _cancelReport(item),
                     ),
                   ],
                 )
@@ -136,7 +176,7 @@ class _ResidentBlotterFormState extends State<_ResidentBlotterForm> {
   final contact = TextEditingController();
   final respondent = TextEditingController();
   final date = TextEditingController(text: todayIso());
-  final time = TextEditingController();
+  final time = TextEditingController(text: _currentTimeText());
   final location = TextEditingController();
   final narrative = TextEditingController();
   String type = '';
@@ -241,12 +281,12 @@ class _ResidentBlotterFormState extends State<_ResidentBlotterForm> {
                 ],
                 onChanged: (v) => setState(() => type = v ?? ''),
               ),
-              LabeledTextField(
+              LabeledDateField(
                 label: 'Incident Date',
                 controller: date,
                 requiredField: true,
               ),
-              LabeledTextField(
+              LabeledTimeField(
                 label: 'Incident Time',
                 controller: time,
                 requiredField: true,
@@ -285,4 +325,11 @@ class _ResidentBlotterFormState extends State<_ResidentBlotterForm> {
       },
     );
   }
+}
+
+String _currentTimeText() {
+  final now = DateTime.now();
+  final hour = now.hour.toString().padLeft(2, '0');
+  final minute = now.minute.toString().padLeft(2, '0');
+  return '$hour:$minute';
 }
