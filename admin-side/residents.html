@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Barangay Information Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        aside { position: relative; z-index: 10; }
+        aside nav a { position: relative; z-index: 11; cursor: pointer; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="w-72 border-r border-slate-200 h-full p-4 hidden md:flex md:flex-col bg-white">
+            <!-- Sidebar Header / Logo -->
+            <div class="flex items-center gap-3 mb-8 px-2 mt-2">
+                <div class="bg-blue-600 p-2 rounded-lg shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-sm font-bold text-slate-800 leading-tight">Barangay Information<br>Management System</h2>
+                </div>
+            </div>
+            <nav class="space-y-6 flex-1 overflow-y-auto pr-2">
+                <!-- Main Section -->
+                <div>
+                    <h3 class="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Main</h3>
+                    <div class="space-y-1">
+                        <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2 text-sm font-medium bg-blue-50 text-blue-700 rounded-lg transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                            </svg>
+                            Dashboard
+                        </a>
+                    </div>
+                </div>
+
+                <!-- People Section -->
+                <div>
+                    <h3 class="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">People</h3>
+                    <div class="space-y-1">
+                        <a href="residents.html" class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                            Residents
+                        </a>
+                        <a href="officials.html" class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            Officials
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Records & Services Section -->
+                <div>
+                    <h3 class="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Records & Services</h3>
+                    <div class="space-y-1">
+                        <a href="blotter.html" class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            Blotter Records
+                        </a>
+                        <a href="events.html" class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Events
+                        </a>
+                        <a href="certificates.html" class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Certificates
+                        </a>
+                    </div>
+                </div>
+
+            </nav>
+
+            <!-- User Profile & Logout at Bottom -->
+            <div class="mt-auto pt-4 border-t border-slate-200">
+                <div class="flex items-center justify-between px-2 py-2">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                            <span class="text-sm font-bold text-slate-600">A</span>
+                        </div>
+                        <div class="truncate">
+                            <p class="text-sm font-semibold text-slate-700 truncate">Administrator</p>
+                            <p class="text-xs text-slate-500 truncate">admin@barangay.gov</p>
+                        </div>
+                    </div>
+                    <button onclick="showLogoutModal()" class="p-2 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg transition-colors shrink-0" title="Log out">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8 overflow-y-auto bg-slate-50">
+            
+            <!-- Header -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800">Resident Management</h1>
+                    <p class="text-slate-500 mt-1">Manage and track all barangay residents.</p>
+                </div>
+                <div>
+                    <button onclick="showAddResidentModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        Add Resident
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table Section -->
+            <div class="mb-4 flex items-center gap-3">
+                <div class="p-2 bg-blue-100 text-blue-700 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-slate-800">Total Residents: <span id="totalResidentCount" class="text-blue-600 font-bold text-lg">0</span></p>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+                    <h3 class="font-semibold text-slate-800">Resident Masterlist</h3>
+                    <div class="relative">
+                        <input type="text" placeholder="Search residents..." class="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <thead class="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-4">Full Name</th>
+                                <th class="px-6 py-4">Gender</th>
+                                <th class="px-6 py-4">Civil Status</th>
+                                <th class="px-6 py-4">Classification</th>
+                                <th class="px-6 py-4">Voter Status</th>
+                                <th class="px-6 py-4">Username</th>
+                                <th class="px-6 py-4 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="residentsTableBody" class="divide-y divide-slate-100">
+                            <tr>
+                                <td colspan="7" class="px-6 py-8 text-center text-slate-500">
+                                    No residents found. Click "Add Resident" to start.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Add Resident Modal -->
+    <div id="addResidentModal" class="fixed inset-0 z-50 hidden p-4 sm:p-6 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col transform transition-all scale-95 opacity-0 duration-200 overflow-hidden" id="addResidentContent">
+            
+            <form id="addResidentForm" class="flex flex-col h-full w-full max-h-[90vh]">
+                <!-- Header -->
+                <div class="flex items-center justify-between p-6 border-b border-slate-200 shrink-0 bg-white">
+                    <h3 id="residentModalTitle" class="text-xl font-bold text-slate-800">Add New Resident</h3>
+                    <button type="button" onclick="closeAddResidentModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Scrollable Body -->
+                <div class="flex-1 overflow-y-auto p-6">
+                    
+                    <h4 class="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Personal Information</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Last Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="resLastName" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">First Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="resFirstName" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Middle Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="resMiddleName" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Gender <span class="text-red-500">*</span></label>
+                        <select id="resGender" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Birthday <span class="text-red-500">*</span></label>
+                        <input type="date" id="resBirthday" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Civil Status <span class="text-red-500">*</span></label>
+                        <select id="resCivilStatus" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+                            <option value="">Select Status</option>
+                            <option value="Single">Single</option>
+                            <option value="Married">Married</option>
+                            <option value="Widowed">Widowed</option>
+                            <option value="Separated">Separated</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Nationality <span class="text-red-500">*</span></label>
+                        <input type="text" id="resNationality" required value="Filipino" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                    </div>
+                </div>
+
+                <h4 class="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Contact & Address</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Mobile Number <span class="text-red-500">*</span></label>
+                        <input type="tel" id="resMobile" required placeholder="09XX XXX XXXX" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Email <span class="text-slate-400 font-normal">(Optional)</span></label>
+                        <input type="email" id="resEmail" placeholder="example@email.com" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">House Number <span class="text-red-500">*</span></label>
+                        <input type="text" id="resHouseNo" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Street <span class="text-red-500">*</span></label>
+                        <input type="text" id="resStreet" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Purok <span class="text-red-500">*</span></label>
+                        <input type="text" id="resPurok" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Province <span class="text-red-500">*</span></label>
+                        <input type="text" id="resProvince" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                    </div>
+                    <div class="lg:col-span-4">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Municipality (PH) <span class="text-red-500">*</span></label>
+                        <select id="resMunicipality" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+                            <option value="">Select Municipality</option>
+                            <option value="Manila">Manila</option>
+                            <option value="Quezon City">Quezon City</option>
+                            <option value="Cebu City">Cebu City</option>
+                            <option value="Davao City">Davao City</option>
+                            <option value="Makati City">Makati City</option>
+                            <option value="Taguig City">Taguig City</option>
+                            <option value="Pasig City">Pasig City</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <h4 class="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Other Details</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Classification <span class="text-red-500">*</span></label>
+                        <select id="resClassification" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+                            <option value="">Select Classification</option>
+                            <option value="Student">Student</option>
+                            <option value="Employed">Employed</option>
+                            <option value="Unemployed">Unemployed</option>
+                            <option value="Senior Citizen">Senior Citizen</option>
+                            <option value="PWD">PWD</option>
+                            <option value="Self-Employed">Self-Employed</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Voter Status <span class="text-red-500">*</span></label>
+                        <select id="resVoterStatus" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+                            <option value="">Select Status</option>
+                            <option value="Registered">Registered Voter</option>
+                            <option value="Non-Voter">Non-Voter</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Resident Status <span class="text-red-500">*</span></label>
+                        <select id="resResidentStatus" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+                            <option value="Active">Active</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+
+                <h4 class="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Resident Portal Account</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Username <span class="text-red-500">*</span></label>
+                        <input type="text" id="resUsername" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Password <span class="text-red-500">*</span></label>
+                        <input type="text" id="resPassword" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                    </div>
+                </div>
+
+                </div>
+                
+                <!-- Footer -->
+                <div class="flex justify-end gap-3 p-6 border-t border-slate-200 shrink-0 bg-slate-50">
+                    <button type="button" onclick="closeAddResidentModal()" class="px-5 py-2 border border-slate-300 rounded-lg text-slate-700 font-medium hover:bg-slate-100 transition-colors text-sm shadow-sm bg-white">
+                        Close
+                    </button>
+                    <button type="button" id="btnEditResident" onclick="enableEditMode()" class="hidden px-5 py-2 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 shadow-sm transition-colors text-sm">
+                        Edit Resident
+                    </button>
+                    <button type="submit" id="btnSaveResident" class="px-5 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-sm transition-colors text-sm">
+                        Save Resident
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 transform transition-all scale-95 opacity-0 duration-200" id="deleteContent">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                    <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">Delete Resident</h3>
+                <p class="text-sm text-slate-500 mt-2">
+                    Are you sure you want to permanently delete this resident? This action cannot be undone.
+                </p>
+                <div class="mt-6 flex gap-3">
+                    <button onclick="closeDeleteModal()" 
+                        class="flex-1 inline-flex justify-center rounded-lg border border-slate-200 shadow-sm px-4 py-2 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="confirmDeleteResident()" 
+                        class="flex-1 inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-red-600 text-sm font-medium text-white hover:bg-red-700 focus:outline-none transition-colors">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Logout Modal -->
+    <div id="logoutModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 transform transition-all scale-95 opacity-0 duration-200" id="logoutContent">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                    <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">Sign Out</h3>
+                <p class="text-sm text-slate-500 mt-2">
+                    Are you sure you want to sign out of the Administrator portal?
+                </p>
+                <div class="mt-6 flex gap-3">
+                    <button onclick="closeLogoutModal()" 
+                        class="flex-1 inline-flex justify-center rounded-lg border border-slate-200 shadow-sm px-4 py-2 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-200 transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="confirmLogout()" 
+                        class="flex-1 inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-red-600 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../shared/realtime-sync.js"></script>
+    <script>
+        // Active Link Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentPath = window.location.pathname.split('/').pop() || 'dashboard.html';
+            const links = document.querySelectorAll('aside nav a');
+            
+            links.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href === currentPath) {
+                    link.className = 'flex items-center gap-3 px-3 py-2 text-sm font-medium bg-blue-50 text-blue-700 rounded-lg transition-all';
+                } else {
+                    link.className = 'flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all';
+                }
+            });
+        });
+
+        // Logout Modal Logic
+        const logoutModal = document.getElementById('logoutModal');
+        const logoutContent = document.getElementById('logoutContent');
+
+        function showLogoutModal() {
+            logoutModal.classList.remove('hidden');
+            setTimeout(() => {
+                logoutContent.classList.remove('scale-95', 'opacity-0');
+                logoutContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeLogoutModal() {
+            logoutContent.classList.add('scale-95', 'opacity-0');
+            logoutContent.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => {
+                logoutModal.classList.add('hidden');
+            }, 200);
+        }
+
+        function confirmLogout() {
+            window.location.href = '../index.html';
+        }
+
+        logoutModal.addEventListener('click', (e) => {
+            if (e.target === logoutModal) {
+                closeLogoutModal();
+            }
+        });
+
+        // Resident Management Logic
+        const addResidentModal = document.getElementById('addResidentModal');
+        const addResidentContent = document.getElementById('addResidentContent');
+        const addResidentForm = document.getElementById('addResidentForm');
+        const residentsTableBody = document.getElementById('residentsTableBody');
+        const totalResidentCount = document.getElementById('totalResidentCount');
+        const residentModalTitle = document.getElementById('residentModalTitle');
+        const btnEditResident = document.getElementById('btnEditResident');
+        const btnSaveResident = document.getElementById('btnSaveResident');
+
+        const deleteModal = document.getElementById('deleteModal');
+        const deleteContent = document.getElementById('deleteContent');
+
+        let residents = JSON.parse(localStorage.getItem('bims_residents')) || [];
+        let currentResidentId = null;
+        let residentToDelete = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateResidentsTable();
+        });
+
+        function saveToLocalStorage() {
+            localStorage.setItem('bims_residents', JSON.stringify(residents));
+        }
+
+        function setFormDisabled(disabled) {
+            const inputs = addResidentForm.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => input.disabled = disabled);
+        }
+
+        function showAddResidentModal() {
+            currentResidentId = null;
+            addResidentForm.reset();
+            setFormDisabled(false);
+            residentModalTitle.textContent = 'Add New Resident';
+            btnEditResident.classList.add('hidden');
+            btnSaveResident.classList.remove('hidden');
+            btnSaveResident.textContent = 'Save Resident';
+
+            addResidentModal.classList.remove('hidden');
+            setTimeout(() => {
+                addResidentContent.classList.remove('scale-95', 'opacity-0');
+                addResidentContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeAddResidentModal() {
+            addResidentContent.classList.add('scale-95', 'opacity-0');
+            addResidentContent.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => {
+                addResidentModal.classList.add('hidden');
+                addResidentForm.reset();
+            }, 200);
+        }
+
+        function viewResident(id) {
+            currentResidentId = id;
+            const res = residents.find(r => r.id === id);
+            if (!res) return;
+
+            document.getElementById('resLastName').value = res.lastName || '';
+            document.getElementById('resFirstName').value = res.firstName || '';
+            document.getElementById('resMiddleName').value = res.middleName || '';
+            document.getElementById('resGender').value = res.gender || '';
+            document.getElementById('resBirthday').value = res.birthday || '';
+            document.getElementById('resCivilStatus').value = res.civilStatus || '';
+            document.getElementById('resNationality').value = res.nationality || '';
+            document.getElementById('resMobile').value = res.mobile || '';
+            document.getElementById('resEmail').value = res.email || '';
+            document.getElementById('resHouseNo').value = res.houseNo || '';
+            document.getElementById('resStreet').value = res.street || '';
+            document.getElementById('resPurok').value = res.purok || '';
+            document.getElementById('resProvince').value = res.province || '';
+            document.getElementById('resMunicipality').value = res.municipality || '';
+            document.getElementById('resClassification').value = res.classification || '';
+            document.getElementById('resVoterStatus').value = res.voterStatus || '';
+            document.getElementById('resResidentStatus').value = res.residentStatus || 'Active';
+            document.getElementById('resUsername').value = res.username || '';
+            document.getElementById('resPassword').value = res.password || '';
+
+            setFormDisabled(true);
+            residentModalTitle.textContent = 'Resident Details';
+            btnEditResident.classList.remove('hidden');
+            btnSaveResident.classList.add('hidden');
+
+            addResidentModal.classList.remove('hidden');
+            setTimeout(() => {
+                addResidentContent.classList.remove('scale-95', 'opacity-0');
+                addResidentContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function enableEditMode() {
+            setFormDisabled(false);
+            residentModalTitle.textContent = 'Edit Resident Details';
+            btnEditResident.classList.add('hidden');
+            btnSaveResident.classList.remove('hidden');
+            btnSaveResident.textContent = 'Update Resident';
+        }
+
+        addResidentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const residentData = {
+                lastName: document.getElementById('resLastName').value,
+                firstName: document.getElementById('resFirstName').value,
+                middleName: document.getElementById('resMiddleName').value,
+                gender: document.getElementById('resGender').value,
+                birthday: document.getElementById('resBirthday').value,
+                civilStatus: document.getElementById('resCivilStatus').value,
+                nationality: document.getElementById('resNationality').value,
+                mobile: document.getElementById('resMobile').value,
+                email: document.getElementById('resEmail').value,
+                houseNo: document.getElementById('resHouseNo').value,
+                street: document.getElementById('resStreet').value,
+                purok: document.getElementById('resPurok').value,
+                province: document.getElementById('resProvince').value,
+                municipality: document.getElementById('resMunicipality').value,
+                classification: document.getElementById('resClassification').value,
+                voterStatus: document.getElementById('resVoterStatus').value,
+                residentStatus: document.getElementById('resResidentStatus').value,
+                username: document.getElementById('resUsername').value.trim(),
+                password: document.getElementById('resPassword').value
+            };
+
+            const duplicateUsername = residents.some(r => 
+                r.username === residentData.username && r.id !== currentResidentId
+            );
+            if (duplicateUsername) {
+                alert('This resident username is already in use. Please choose another username.');
+                return;
+            }
+
+            if (currentResidentId) {
+                const index = residents.findIndex(r => r.id === currentResidentId);
+                if (index !== -1) {
+                    residents[index] = { ...residents[index], ...residentData };
+                }
+            } else {
+                residentData.id = Date.now();
+                residentData.registeredAt = new Date().toISOString();
+                residents.push(residentData);
+            }
+
+            saveToLocalStorage();
+            updateResidentsTable();
+            closeAddResidentModal();
+        });
+
+        // Delete Logic
+        function showDeleteModal(id) {
+            residentToDelete = id;
+            deleteModal.classList.remove('hidden');
+            setTimeout(() => {
+                deleteContent.classList.remove('scale-95', 'opacity-0');
+                deleteContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeDeleteModal() {
+            deleteContent.classList.add('scale-95', 'opacity-0');
+            deleteContent.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => {
+                deleteModal.classList.add('hidden');
+                residentToDelete = null;
+            }, 200);
+        }
+
+        function confirmDeleteResident() {
+            if (residentToDelete) {
+                residents = residents.filter(r => r.id !== residentToDelete);
+                saveToLocalStorage();
+                updateResidentsTable();
+                closeDeleteModal();
+            }
+        }
+
+
+        function updateResidentsTable() {
+            totalResidentCount.textContent = residents.length;
+            residentsTableBody.innerHTML = '';
+
+            if (residents.length === 0) {
+                residentsTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-6 py-8 text-center text-slate-500">
+                            No residents found. Click "Add Resident" to start.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            residents.forEach(res => {
+                const fullName = `${res.lastName}, ${res.firstName} ${res.middleName}`;
+                
+                const voterPillClass = res.voterStatus === 'Registered' 
+                    ? 'bg-emerald-100 text-emerald-700' 
+                    : 'bg-slate-100 text-slate-700';
+
+                const classPillClass = res.classification === 'Student' ? 'bg-blue-100 text-blue-700'
+                    : res.classification === 'Senior Citizen' ? 'bg-purple-100 text-purple-700'
+                    : 'bg-amber-100 text-amber-700';
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0';
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-medium text-slate-800">${fullName}</td>
+                    <td class="px-6 py-4">${res.gender}</td>
+                    <td class="px-6 py-4">${res.civilStatus}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${classPillClass}">${res.classification}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${voterPillClass}">${res.voterStatus}</span>
+                    </td>
+                    <td class="px-6 py-4 font-mono text-xs text-slate-600">${res.username || '-'}</td>
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex gap-2 justify-end">
+                            <button onclick="viewResident(${res.id})" class="text-blue-600 hover:text-blue-800 p-1" title="View/Edit">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                </svg>
+                            </button>
+                            <button onclick="showDeleteModal(${res.id})" class="text-red-600 hover:text-red-800 p-1" title="Delete">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                residentsTableBody.appendChild(tr);
+            });
+        }
+
+        function syncResidentRecords() {
+            residents = JSON.parse(localStorage.getItem('bims_residents')) || [];
+            updateResidentsTable();
+        }
+
+        BimsRealtime.watch(['bims_residents'], syncResidentRecords);
+    </script>
+</body>
+</html>

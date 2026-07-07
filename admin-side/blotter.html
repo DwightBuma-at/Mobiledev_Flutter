@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Barangay Information Management System</title>
+    <link rel="icon" href="data:,">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        aside { position: relative; z-index: 10; }
+        aside nav a { position: relative; z-index: 11; cursor: pointer; }
+    </style>
+    <script>
+        function openBlotterModal(modalId, contentId) {
+            const modal = document.getElementById(modalId);
+            const content = document.getElementById(contentId);
+            if (!modal || !content) return;
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeBlotterModal(modalId, contentId, formId) {
+            const modal = document.getElementById(modalId);
+            const content = document.getElementById(contentId);
+            const form = formId ? document.getElementById(formId) : null;
+            if (!modal || !content) return;
+
+            content.classList.add('scale-95', 'opacity-0');
+            content.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                if (form) form.reset();
+            }, 200);
+        }
+
+        window.showAddBlotterModal = function () {
+            const form = document.getElementById('addBlotterForm');
+            const dateInput = document.getElementById('blotDate');
+            const title = document.getElementById('blotterModalTitle');
+            const editButton = document.getElementById('btnEditBlotter');
+            const saveButton = document.getElementById('btnSaveBlotter');
+
+            if (form) form.reset();
+            if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+            if (title) title.textContent = 'Add New Blotter';
+            if (editButton) editButton.classList.add('hidden');
+            if (saveButton) {
+                saveButton.classList.remove('hidden');
+                saveButton.textContent = 'Save Blotter';
+            }
+
+            openBlotterModal('addBlotterModal', 'addBlotterContent');
+        };
+
+        window.closeAddBlotterModal = function () {
+            closeBlotterModal('addBlotterModal', 'addBlotterContent', 'addBlotterForm');
+        };
+
+        window.showBlotterLogsModal = function () {
+            openBlotterModal('blotterLogsModal', 'blotterLogsContent');
+        };
+
+        window.closeBlotterLogsModal = function () {
+            closeBlotterModal('blotterLogsModal', 'blotterLogsContent');
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.__blotterMainReady) return;
+
+            const form = document.getElementById('addBlotterForm');
+            const tableBody = document.getElementById('blotterTableBody');
+            const totalCount = document.getElementById('totalBlotterCount');
+            if (!form || !tableBody) return;
+
+            const readFallbackBlotters = () => {
+                try {
+                    return JSON.parse(localStorage.getItem('bims_blotters')) || [];
+                } catch (error) {
+                    localStorage.setItem('bims_blotters', JSON.stringify([]));
+                    return [];
+                }
+            };
+
+            const renderFallbackBlotters = () => {
+                const records = readFallbackBlotters().filter(item => item.status !== 'Completed');
+                if (totalCount) totalCount.textContent = records.length;
+
+                if (records.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-slate-500">No active blotter records found. Click "Add Blotter" to start.</td></tr>';
+                    return;
+                }
+
+                tableBody.innerHTML = records.sort((a, b) => b.id - a.id).map(record => `
+                    <tr class="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0">
+                        <td class="px-6 py-4 font-semibold text-slate-700">${record.caseNo || '-'}</td>
+                        <td class="px-6 py-4 font-medium text-slate-800">${record.complainant || '-'}</td>
+                        <td class="px-6 py-4">${record.respondent || '-'}</td>
+                        <td class="px-6 py-4 text-slate-600">${record.type || '-'}</td>
+                        <td class="px-6 py-4 text-xs text-slate-500">${record.date || '-'}<br>${record.time || '-'}</td>
+                        <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">${record.submittedBy || 'Admin'}</span></td>
+                        <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">${record.status || 'Pending'}</span></td>
+                        <td class="px-6 py-4 text-right text-slate-400">Saved</td>
+                    </tr>
+                `).join('');
+            };
+
+            form.addEventListener('submit', event => {
+                event.preventDefault();
+
+                const records = readFallbackBlotters();
+                const year = new Date().getFullYear();
+                const randomNum = Math.floor(1000 + Math.random() * 9000);
+                records.push({
+                    id: Date.now(),
+                    caseNo: `BIMS-${year}-${randomNum}`,
+                    complainant: document.getElementById('blotComplainant')?.value || '',
+                    contact: document.getElementById('blotContact')?.value || '',
+                    respondent: document.getElementById('blotRespondent')?.value || '',
+                    type: document.getElementById('blotType')?.value || '',
+                    date: document.getElementById('blotDate')?.value || '',
+                    time: document.getElementById('blotTime')?.value || '',
+                    location: document.getElementById('blotLocation')?.value || '',
+                    status: document.getElementById('blotStatus')?.value || 'Pending',
+                    narrative: document.getElementById('blotNarrative')?.value || '',
+                    actionTaken: document.getElementById('blotActionTaken')?.value || ''
+                });
+
+                localStorage.setItem('bims_blotters', JSON.stringify(records));
+                renderFallbackBlotters();
+                window.closeAddBlotterModal();
+            });
+
+            renderFallbackBlotters();
+        });
+    </script>
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="w-72 border-r border-slate-200 h-full p-4 hidden md:flex md:flex-col bg-white">
+            <!-- Sidebar Header / Logo -->
+            <div class="flex items-center gap-3 mb-8 px-2 mt-2">
+                <div class="bg-blue-600 p-2 rounded-lg shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-sm font-bold text-slate-800 leading-tight">Barangay Information<br>Management System</h2>
+                </div>
+            </div>
+            <nav class="space-y-6 flex-1 overflow-y-auto pr-2">
+                <!-- Main Section -->
+                <div>
+                    <h3 class="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Main</h3>
+                    <div class="space-y-1">
+                        <a href="dashboard.html" class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                            </svg>
+                            Dashboard
+                        </a>
+                    </div>
+                </div>
+
+                <!-- People Section -->
+                <div>
+                    <h3 class="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">People</h3>
+                    <div class="space-y-1">
+                        <a href="residents.html" class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                            Residents
+                        </a>
+                        <a href="officials.html" class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            Officials
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Records & Services Section -->
+                <div>
+                    <h3 class="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Records & Services</h3>
+                    <div class="space-y-1">
+                        <a href="blotter.html" class="flex items-center gap-3 px-3 py-2 text-sm font-medium bg-blue-50 text-blue-700 rounded-lg transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            Blotter Records
+                        </a>
+                        <a href="events.html" class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Events
+                        </a>
+                        <a href="certificates.html" class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Certificates
+                        </a>
+                    </div>
+                </div>
+
+            </nav>
+
+            <!-- User Profile & Logout at Bottom -->
+            <div class="mt-auto pt-4 border-t border-slate-200">
+                <div class="flex items-center justify-between px-2 py-2">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                            <span class="text-sm font-bold text-slate-600">A</span>
+                        </div>
+                        <div class="truncate">
+                            <p class="text-sm font-semibold text-slate-700 truncate">Administrator</p>
+                            <p class="text-xs text-slate-500 truncate">admin@barangay.gov</p>
+                        </div>
+                    </div>
+                    <button onclick="showLogoutModal()" class="p-2 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg transition-colors shrink-0" title="Log out">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8 overflow-y-auto bg-slate-50">
+            <!-- Header -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800">Blotter Records</h1>
+                    <p class="text-slate-500 mt-1">Manage and track all barangay incident reports.</p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <button type="button" id="btnOpenBlotterLogs" onclick="showBlotterLogsModal()" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-5 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Logs
+                    </button>
+                    <button type="button" id="btnOpenAddBlotter" onclick="showAddBlotterModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        Add Blotter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table Section -->
+            <div class="mb-4 flex items-center gap-3">
+                <div class="p-2 bg-blue-100 text-blue-700 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-slate-800">Total Blotter Records: <span id="totalBlotterCount" class="text-blue-600 font-bold text-lg">0</span></p>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+                    <h3 class="font-semibold text-slate-800">Incident Reports Masterlist</h3>
+                    <div class="relative">
+                        <input type="text" placeholder="Search records..." class="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <thead class="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-4">Case No.</th>
+                                <th class="px-6 py-4">Complainant</th>
+                                <th class="px-6 py-4">Respondent</th>
+                                <th class="px-6 py-4">Incident Type</th>
+                                <th class="px-6 py-4">Date & Time</th>
+                                <th class="px-6 py-4">Source</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="blotterTableBody" class="divide-y divide-slate-100">
+                            <tr>
+                                <td colspan="8" class="px-6 py-8 text-center text-slate-500">
+                                    No records found. Click "Add Blotter" to start.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Blotter Logs Modal -->
+    <div id="blotterLogsModal" class="fixed inset-0 z-50 hidden p-4 sm:p-6 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+        <div id="blotterLogsContent" class="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col transform transition-all scale-95 opacity-0 duration-200 overflow-hidden">
+            <div class="flex items-center justify-between p-6 border-b border-slate-200 shrink-0 bg-white">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-800">Blotter Logs</h3>
+                    <p class="text-sm text-slate-500 mt-1">Completed, resolved, and dismissed blotter transactions.</p>
+                </div>
+                <button type="button" onclick="closeBlotterLogsModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-600">
+                    <thead class="bg-slate-50 text-slate-500 font-semibold text-xs uppercase tracking-wider border-b border-slate-200">
+                        <tr>
+                            <th class="px-6 py-4">Case No.</th>
+                            <th class="px-6 py-4">Complainant</th>
+                            <th class="px-6 py-4">Respondent</th>
+                            <th class="px-6 py-4">Incident</th>
+                            <th class="px-6 py-4">Date</th>
+                            <th class="px-6 py-4">Result</th>
+                            <th class="px-6 py-4 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="blotterLogsTableBody" class="divide-y divide-slate-100">
+                        <tr><td colspan="7" class="px-6 py-10 text-center text-slate-400">No blotter logs yet.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Blotter Modal -->
+    <div id="addBlotterModal" class="fixed inset-0 z-50 hidden p-4 sm:p-6 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col transform transition-all scale-95 opacity-0 duration-200 overflow-hidden" id="addBlotterContent">
+            
+            <form id="addBlotterForm" class="flex flex-col h-full w-full max-h-[90vh]">
+                <!-- Header -->
+                <div class="flex items-center justify-between p-6 border-b border-slate-200 shrink-0 bg-white">
+                    <h3 id="blotterModalTitle" class="text-xl font-bold text-slate-800">Add New Blotter</h3>
+                    <button type="button" onclick="closeAddBlotterModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Scrollable Body -->
+                <div class="flex-1 overflow-y-auto p-6">
+                    
+                    <h4 class="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Parties Involved</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Complainant Name <span class="text-red-500">*</span></label>
+                            <input type="text" id="blotComplainant" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Complainant Contact <span class="text-red-500">*</span></label>
+                            <input type="tel" id="blotContact" required placeholder="09XX XXX XXXX" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Respondent Name <span class="text-red-500">*</span></label>
+                            <input type="text" id="blotRespondent" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                        </div>
+                    </div>
+
+                    <h4 class="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Incident Details</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Incident Type <span class="text-red-500">*</span></label>
+                            <select id="blotType" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+                                <option value="">Select</option>
+                                <option value="Theft">Theft / Robbery</option>
+                                <option value="Physical Injury">Physical Injury</option>
+                                <option value="Harassment">Harassment</option>
+                                <option value="Disturbing the Peace">Disturbing the Peace</option>
+                                <option value="Domestic Violence">Domestic Violence</option>
+                                <option value="Property Damage">Property Damage</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Incident Date <span class="text-red-500">*</span></label>
+                            <input type="date" id="blotDate" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Incident Time <span class="text-red-500">*</span></label>
+                            <input type="time" id="blotTime" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Location <span class="text-red-500">*</span></label>
+                            <input type="text" id="blotLocation" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Status <span class="text-red-500">*</span></label>
+                            <select id="blotStatus" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+                                <option value="Pending">Pending</option>
+                                <option value="In-progress">In-progress</option>
+                                <option value="Completed">Mark as Completed</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h4 class="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Narrative & Action</h4>
+                    <div class="grid grid-cols-1 gap-6 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Narrative (Detailed Report) <span class="text-red-500">*</span></label>
+                            <textarea id="blotNarrative" required rows="4" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm resize-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Action Taken</label>
+                            <textarea id="blotActionTaken" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm resize-none"></textarea>
+                        </div>
+                    </div>
+
+                </div>
+                
+                <!-- Footer -->
+                <div class="flex justify-end gap-3 p-6 border-t border-slate-200 shrink-0 bg-slate-50">
+                    <button type="button" onclick="closeAddBlotterModal()" class="px-5 py-2 border border-slate-300 rounded-lg text-slate-700 font-medium hover:bg-white transition-colors text-sm shadow-sm bg-white">
+                        Cancel
+                    </button>
+                    <button type="button" id="btnEditBlotter" onclick="enableEditMode()" class="hidden px-5 py-2 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 shadow-sm transition-colors text-sm">
+                        Edit Blotter
+                    </button>
+                    <button type="submit" id="btnSaveBlotter" class="px-5 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-sm transition-colors text-sm">
+                        Save Blotter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 transform transition-all scale-95 opacity-0 duration-200" id="deleteContent">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                    <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">Delete Record</h3>
+                <p class="text-sm text-slate-500 mt-2">
+                    Are you sure you want to permanently delete this blotter record? This action cannot be undone.
+                </p>
+                <div class="mt-6 flex gap-3">
+                    <button onclick="closeDeleteModal()" 
+                        class="flex-1 inline-flex justify-center rounded-lg border border-slate-200 shadow-sm px-4 py-2 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="confirmDeleteBlotter()" 
+                        class="flex-1 inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-red-600 text-sm font-medium text-white hover:bg-red-700 focus:outline-none transition-colors">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complete Confirmation Modal -->
+    <div id="completeModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 transform transition-all scale-95 opacity-0 duration-200" id="completeContent">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100 mb-4">
+                    <svg class="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">Complete Blotter Record</h3>
+                <p class="text-sm text-slate-500 mt-2">
+                    Mark this blotter record as completed? It will be removed from active blotter records.
+                </p>
+                <div class="mt-6 flex gap-3">
+                    <button onclick="closeCompleteModal()" 
+                        class="flex-1 inline-flex justify-center rounded-lg border border-slate-200 shadow-sm px-4 py-2 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="confirmCompleteBlotter()" 
+                        class="flex-1 inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-emerald-600 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none transition-colors">
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Modal -->
+    <div id="logoutModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 transform transition-all scale-95 opacity-0 duration-200" id="logoutContent">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                    <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">Sign Out</h3>
+                <p class="text-sm text-slate-500 mt-2">
+                    Are you sure you want to sign out of the Administrator portal?
+                </p>
+                <div class="mt-6 flex gap-3">
+                    <button onclick="closeLogoutModal()" 
+                        class="flex-1 inline-flex justify-center rounded-lg border border-slate-200 shadow-sm px-4 py-2 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-200 transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="confirmLogout()" 
+                        class="flex-1 inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-red-600 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../shared/realtime-sync.js"></script>
+    <script>
+        window.__blotterMainReady = true;
+
+        // Active Link Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentPath = window.location.pathname.split('/').pop() || 'dashboard.html';
+            const links = document.querySelectorAll('aside nav a');
+            
+            links.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href === currentPath) {
+                    link.className = 'flex items-center gap-3 px-3 py-2 text-sm font-medium bg-blue-50 text-blue-700 rounded-lg transition-all';
+                } else {
+                    link.className = 'flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-all';
+                }
+            });
+        });
+
+        // Logout Modal Logic
+        const logoutModal = document.getElementById('logoutModal');
+        const logoutContent = document.getElementById('logoutContent');
+
+        function showLogoutModal() {
+            logoutModal.classList.remove('hidden');
+            setTimeout(() => {
+                logoutContent.classList.remove('scale-95', 'opacity-0');
+                logoutContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeLogoutModal() {
+            logoutContent.classList.add('scale-95', 'opacity-0');
+            logoutContent.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => {
+                logoutModal.classList.add('hidden');
+            }, 200);
+        }
+
+        function confirmLogout() {
+            window.location.href = '../index.html';
+        }
+
+        // Blotter Management Logic
+        const addBlotterModal = document.getElementById('addBlotterModal');
+        const addBlotterContent = document.getElementById('addBlotterContent');
+        const addBlotterForm = document.getElementById('addBlotterForm');
+        const blotterTableBody = document.getElementById('blotterTableBody');
+        const totalBlotterCount = document.getElementById('totalBlotterCount');
+        const blotterModalTitle = document.getElementById('blotterModalTitle');
+        const btnEditBlotter = document.getElementById('btnEditBlotter');
+        const btnSaveBlotter = document.getElementById('btnSaveBlotter');
+
+        const deleteModal = document.getElementById('deleteModal');
+        const deleteContent = document.getElementById('deleteContent');
+        const completeModal = document.getElementById('completeModal');
+        const completeContent = document.getElementById('completeContent');
+        const blotterLogsModal = document.getElementById('blotterLogsModal');
+        const blotterLogsContent = document.getElementById('blotterLogsContent');
+        const blotterLogsTableBody = document.getElementById('blotterLogsTableBody');
+
+        function readBlotterRecords() {
+            try {
+                return JSON.parse(localStorage.getItem('bims_blotters')) || [];
+            } catch (error) {
+                localStorage.setItem('bims_blotters', JSON.stringify([]));
+                return [];
+            }
+        }
+
+        let blotters = readBlotterRecords();
+        let currentBlotterId = null;
+        let blotterToDelete = null;
+        let blotterToComplete = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateBlotterTable();
+        });
+
+        function saveToLocalStorage() {
+            localStorage.setItem('bims_blotters', JSON.stringify(blotters));
+        }
+
+        function appendTransactionLog(entry) {
+            let logs = [];
+            try {
+                logs = JSON.parse(localStorage.getItem('bims_logs')) || [];
+            } catch (error) {
+                logs = [];
+            }
+
+            if (!logs.some(item => item.key === entry.key)) {
+                logs.push(entry);
+                localStorage.setItem('bims_logs', JSON.stringify(logs));
+            }
+        }
+
+        function normalizeBlotterStatus(status) {
+            if (status === 'Active') return 'In-progress';
+            if (status === 'Resolved' || status === 'Dismissed') return 'Completed';
+            return status || 'Pending';
+        }
+
+        function setFormDisabled(disabled) {
+            const inputs = addBlotterForm.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => input.disabled = disabled);
+        }
+
+        function showAddBlotterModal() {
+            currentBlotterId = null;
+            addBlotterForm.reset();
+            
+            // Auto-fill today's date
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('blotDate').value = today;
+            
+            setFormDisabled(false);
+            blotterModalTitle.textContent = 'Add New Blotter';
+            btnEditBlotter.classList.add('hidden');
+            btnSaveBlotter.classList.remove('hidden');
+            btnSaveBlotter.textContent = 'Save Blotter';
+
+            addBlotterModal.classList.remove('hidden');
+            setTimeout(() => {
+                addBlotterContent.classList.remove('scale-95', 'opacity-0');
+                addBlotterContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeAddBlotterModal() {
+            addBlotterContent.classList.add('scale-95', 'opacity-0');
+            addBlotterContent.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => {
+                addBlotterModal.classList.add('hidden');
+                addBlotterForm.reset();
+            }, 200);
+        }
+
+        function viewBlotter(id) {
+            currentBlotterId = id;
+            const blot = blotters.find(b => b.id === id);
+            if (!blot) return;
+
+            document.getElementById('blotComplainant').value = blot.complainant || '';
+            document.getElementById('blotContact').value = blot.contact || '';
+            document.getElementById('blotRespondent').value = blot.respondent || '';
+            document.getElementById('blotType').value = blot.type || '';
+            document.getElementById('blotDate').value = blot.date || '';
+            document.getElementById('blotTime').value = blot.time || '';
+            document.getElementById('blotLocation').value = blot.location || '';
+            document.getElementById('blotStatus').value = normalizeBlotterStatus(blot.status);
+            document.getElementById('blotNarrative').value = blot.narrative || '';
+            document.getElementById('blotActionTaken').value = blot.actionTaken || '';
+
+            setFormDisabled(true);
+            blotterModalTitle.textContent = 'Blotter Details';
+            btnEditBlotter.classList.remove('hidden');
+            btnSaveBlotter.classList.add('hidden');
+
+            addBlotterModal.classList.remove('hidden');
+            setTimeout(() => {
+                addBlotterContent.classList.remove('scale-95', 'opacity-0');
+                addBlotterContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function enableEditMode() {
+            setFormDisabled(false);
+            blotterModalTitle.textContent = 'Edit Blotter Details';
+            btnEditBlotter.classList.add('hidden');
+            btnSaveBlotter.classList.remove('hidden');
+            btnSaveBlotter.textContent = 'Update Blotter';
+        }
+
+        addBlotterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const blotterData = {
+                complainant: document.getElementById('blotComplainant').value,
+                contact: document.getElementById('blotContact').value,
+                respondent: document.getElementById('blotRespondent').value,
+                type: document.getElementById('blotType').value,
+                date: document.getElementById('blotDate').value,
+                time: document.getElementById('blotTime').value,
+                location: document.getElementById('blotLocation').value,
+                status: normalizeBlotterStatus(document.getElementById('blotStatus').value),
+                narrative: document.getElementById('blotNarrative').value,
+                actionTaken: document.getElementById('blotActionTaken').value
+            };
+
+            if (currentBlotterId) {
+                const index = blotters.findIndex(b => b.id === currentBlotterId);
+                if (index !== -1) {
+                    blotters[index] = { ...blotters[index], ...blotterData };
+                }
+            } else {
+                blotterData.id = Date.now();
+                const year = new Date().getFullYear();
+                const randomNum = Math.floor(1000 + Math.random() * 9000);
+                blotterData.caseNo = `BIMS-${year}-${randomNum}`;
+                blotters.push(blotterData);
+            }
+
+            saveToLocalStorage();
+            updateBlotterTable();
+            closeAddBlotterModal();
+        });
+
+        function showDeleteModal(id) {
+            blotterToDelete = id;
+            deleteModal.classList.remove('hidden');
+            setTimeout(() => {
+                deleteContent.classList.remove('scale-95', 'opacity-0');
+                deleteContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeDeleteModal() {
+            deleteContent.classList.add('scale-95', 'opacity-0');
+            deleteContent.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => {
+                deleteModal.classList.add('hidden');
+                blotterToDelete = null;
+            }, 200);
+        }
+
+        function confirmDeleteBlotter() {
+            if (blotterToDelete) {
+                blotters = blotters.filter(b => b.id !== blotterToDelete);
+                saveToLocalStorage();
+                updateBlotterTable();
+                closeDeleteModal();
+            }
+        }
+
+        function showCompleteModal(id) {
+            blotterToComplete = id;
+            completeModal.classList.remove('hidden');
+            setTimeout(() => {
+                completeContent.classList.remove('scale-95', 'opacity-0');
+                completeContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeCompleteModal() {
+            completeContent.classList.add('scale-95', 'opacity-0');
+            completeContent.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => {
+                completeModal.classList.add('hidden');
+                blotterToComplete = null;
+                updateBlotterTable();
+            }, 200);
+        }
+
+        function confirmCompleteBlotter() {
+            if (!blotterToComplete) return;
+            markBlotterComplete(blotterToComplete);
+            closeCompleteModal();
+        }
+
+        function markBlotterComplete(id) {
+            const idx = blotters.findIndex(b => b.id === id);
+            if (idx !== -1) {
+                blotters[idx].status = 'Completed';
+                blotters[idx].completedAt = new Date().toISOString();
+                appendTransactionLog({
+                    key: `Blotter-${blotters[idx].id}`,
+                    id: blotters[idx].id || Date.now(),
+                    date: blotters[idx].completedAt,
+                    module: 'Blotter',
+                    reference: blotters[idx].caseNo || '-',
+                    record: `${blotters[idx].complainant || 'Complainant'} vs. ${blotters[idx].respondent || 'Respondent'}`,
+                    result: 'Completed',
+                    details: [
+                        ['Case Number', blotters[idx].caseNo || '-'],
+                        ['Complainant', blotters[idx].complainant || '-'],
+                        ['Contact Number', blotters[idx].contact || '-'],
+                        ['Respondent', blotters[idx].respondent || '-'],
+                        ['Incident Type', blotters[idx].type || '-'],
+                        ['Incident Date', blotters[idx].date || '-'],
+                        ['Incident Time', blotters[idx].time || '-'],
+                        ['Location', blotters[idx].location || '-'],
+                        ['Narrative', blotters[idx].narrative || '-'],
+                        ['Action Taken', blotters[idx].actionTaken || '-'],
+                        ['Submitted By', blotters[idx].submittedBy || 'Admin'],
+                        ['Date Completed', blotters[idx].completedAt],
+                        ['Final Status', 'Completed']
+                    ]
+                });
+                saveToLocalStorage();
+                updateBlotterTable();
+            }
+        }
+
+        function updateBlotterStatus(id, status) {
+            if (status === 'Completed') {
+                showCompleteModal(id);
+                return;
+            }
+
+            const idx = blotters.findIndex(b => b.id === id);
+            if (idx !== -1) {
+                blotters[idx].status = normalizeBlotterStatus(status);
+                saveToLocalStorage();
+                updateBlotterTable();
+            }
+        }
+
+        function updateBlotterTable() {
+            const activeBlotters = blotters.filter(b => normalizeBlotterStatus(b.status) !== 'Completed');
+            totalBlotterCount.textContent = activeBlotters.length;
+            blotterTableBody.innerHTML = '';
+
+            if (activeBlotters.length === 0) {
+                blotterTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="px-6 py-8 text-center text-slate-500">
+                            No active blotter records found. Click "Add Blotter" to start.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const sortedBlotters = [...activeBlotters].sort((a, b) => b.id - a.id);
+
+            sortedBlotters.forEach(blot => {
+                const status = normalizeBlotterStatus(blot.status);
+                const statusSelectClass = status === 'Pending'
+                    ? 'bg-amber-50 text-amber-700 border-amber-200'
+                    : status === 'In-progress'
+                        ? 'bg-blue-50 text-blue-700 border-blue-200'
+                        : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0';
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-semibold text-slate-700">${blot.caseNo || '-'}</td>
+                    <td class="px-6 py-4 font-medium text-slate-800">${blot.complainant}</td>
+                    <td class="px-6 py-4">${blot.respondent}</td>
+                    <td class="px-6 py-4 text-slate-600">${blot.type}</td>
+                    <td class="px-6 py-4 text-xs text-slate-500">${blot.date}<br>${blot.time}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${blot.submittedBy === 'Resident Portal' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'}">${blot.submittedBy || 'Admin'}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <select onchange="updateBlotterStatus(${blot.id}, this.value)"
+                            class="w-40 px-2.5 py-1.5 rounded-lg border text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500 ${statusSelectClass}">
+                            <option value="Pending" ${status === 'Pending' ? 'selected' : ''}>Pending</option>
+                            <option value="In-progress" ${status === 'In-progress' ? 'selected' : ''}>In-progress</option>
+                            <option value="Completed" ${status === 'Completed' ? 'selected' : ''}>Mark as Completed</option>
+                        </select>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex gap-2 justify-end items-center">
+                            <button onclick="viewBlotter(${blot.id})" class="text-blue-600 hover:text-blue-800 p-1" title="View/Edit">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                </svg>
+                            </button>
+                            <button onclick="showDeleteModal(${blot.id})" class="text-red-600 hover:text-red-800 p-1" title="Delete">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                blotterTableBody.appendChild(tr);
+            });
+        }
+
+        function showBlotterLogsModal() {
+            renderBlotterLogs();
+            blotterLogsModal.classList.remove('hidden');
+            setTimeout(() => {
+                blotterLogsContent.classList.remove('scale-95', 'opacity-0');
+                blotterLogsContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeBlotterLogsModal() {
+            blotterLogsContent.classList.add('scale-95', 'opacity-0');
+            blotterLogsContent.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => {
+                blotterLogsModal.classList.add('hidden');
+            }, 200);
+        }
+
+        function renderBlotterLogs() {
+            const loggedBlotters = blotters
+                .filter(item => normalizeBlotterStatus(item.status) === 'Completed')
+                .sort((a, b) => (b.completedAt || b.id || 0).toString().localeCompare((a.completedAt || a.id || 0).toString()));
+
+            if (loggedBlotters.length === 0) {
+                blotterLogsTableBody.innerHTML = '<tr><td colspan="7" class="px-6 py-10 text-center text-slate-400">No blotter logs yet.</td></tr>';
+                return;
+            }
+
+            blotterLogsTableBody.innerHTML = loggedBlotters.map(item => {
+                const result = item.status === 'Resolved' || item.status === 'Dismissed' ? item.status : 'Completed';
+                const resultClass = result === 'Dismissed' ? 'bg-slate-100 text-slate-700' : 'bg-emerald-100 text-emerald-700';
+                return `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 font-semibold text-slate-700">${item.caseNo || '-'}</td>
+                        <td class="px-6 py-4 font-medium text-slate-800">${item.complainant || '-'}</td>
+                        <td class="px-6 py-4">${item.respondent || '-'}</td>
+                        <td class="px-6 py-4">${item.type || '-'}</td>
+                        <td class="px-6 py-4 text-xs text-slate-500">${item.completedAt || item.date || '-'}</td>
+                        <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${resultClass}">${result}</span></td>
+                        <td class="px-6 py-4 text-right">
+                            <button type="button" onclick="printBlotterRecord(${item.id})" class="px-3 py-1.5 rounded-lg bg-slate-800 text-white hover:bg-slate-900 text-xs font-bold tracking-wide transition-colors">
+                                PRINT RECORD
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function escapePrintValue(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function formatPrintDateTime(value) {
+            const date = value ? new Date(value) : new Date();
+            if (Number.isNaN(date.getTime())) return value || '-';
+            return date.toLocaleString('en-PH', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+            });
+        }
+
+        function printRecordDocument(config) {
+            const printWindow = window.open('', '_blank', 'width=900,height=720');
+            if (!printWindow) {
+                alert('Please allow pop-ups to print this record.');
+                return;
+            }
+
+            const detailRows = config.details.map(([label, value]) => `
+                <tr>
+                    <th>${escapePrintValue(label)}</th>
+                    <td>${escapePrintValue(value || '-')}</td>
+                </tr>
+            `).join('');
+
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${escapePrintValue(config.reference)} Record</title>
+                    <style>
+                        * { box-sizing: border-box; }
+                        body { font-family: Arial, sans-serif; color: #0f172a; margin: 0; padding: 32px; background: #fff; }
+                        .print-actions { margin-bottom: 18px; }
+                        .print-actions button { background: #1d4ed8; color: #fff; border: 0; border-radius: 8px; padding: 10px 14px; font-weight: 700; cursor: pointer; }
+                        .header { border-bottom: 3px solid #1d4ed8; padding-bottom: 18px; margin-bottom: 22px; }
+                        .agency { color: #1d4ed8; font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; margin: 0 0 8px; }
+                        h1 { font-size: 24px; margin: 0 0 6px; }
+                        .subtitle { color: #64748b; font-size: 13px; margin: 0; }
+                        .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 22px; }
+                        .box { border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; }
+                        .box-label { color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
+                        .box-value { font-size: 14px; font-weight: 700; }
+                        .section-title { font-size: 14px; font-weight: 700; margin: 24px 0 10px; color: #1e293b; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { border: 1px solid #cbd5e1; padding: 10px 12px; text-align: left; vertical-align: top; font-size: 13px; }
+                        th { width: 28%; background: #f8fafc; color: #334155; }
+                        .signature-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 48px; margin-top: 56px; }
+                        .signature { border-top: 1px solid #334155; text-align: center; padding-top: 8px; font-size: 12px; color: #475569; }
+                        .footer { color: #64748b; font-size: 11px; border-top: 1px solid #cbd5e1; margin-top: 28px; padding-top: 12px; }
+                        @media print {
+                            body { padding: 24px; }
+                            .print-actions { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-actions"><button onclick="window.print()">Print / Save as PDF</button></div>
+                    <div class="header">
+                        <p class="agency">Barangay Information Management System</p>
+                        <h1>${escapePrintValue(config.title)}</h1>
+                        <p class="subtitle">Generated on ${escapePrintValue(formatPrintDateTime(new Date().toISOString()))}</p>
+                    </div>
+                    <div class="summary">
+                        <div class="box"><div class="box-label">Reference</div><div class="box-value">${escapePrintValue(config.reference)}</div></div>
+                        <div class="box"><div class="box-label">Module</div><div class="box-value">${escapePrintValue(config.module)}</div></div>
+                        <div class="box"><div class="box-label">Result</div><div class="box-value">${escapePrintValue(config.result)}</div></div>
+                    </div>
+                    <div class="section-title">Record Details</div>
+                    <table><tbody>${detailRows}</tbody></table>
+                    <div class="signature-grid">
+                        <div class="signature">Prepared by</div>
+                        <div class="signature">Verified by</div>
+                    </div>
+                    <div class="footer">This printed record was generated from the barangay admin transaction logs.</div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            setTimeout(() => {
+                printWindow.focus();
+                printWindow.print();
+            }, 300);
+        }
+
+        function printBlotterRecord(id) {
+            const item = blotters.find(record => record.id === id);
+            if (!item) return;
+            const result = item.status === 'Resolved' || item.status === 'Dismissed' ? item.status : 'Completed';
+            printRecordDocument({
+                title: 'Blotter Transaction Record',
+                module: 'Blotter Records',
+                reference: item.caseNo || '-',
+                result,
+                details: [
+                    ['Case Number', item.caseNo || '-'],
+                    ['Complainant', item.complainant || '-'],
+                    ['Contact Number', item.contact || '-'],
+                    ['Respondent', item.respondent || '-'],
+                    ['Incident Type', item.type || '-'],
+                    ['Incident Date', item.date || '-'],
+                    ['Incident Time', item.time || '-'],
+                    ['Location', item.location || '-'],
+                    ['Narrative', item.narrative || '-'],
+                    ['Action Taken', item.actionTaken || '-'],
+                    ['Submitted By', item.submittedBy || 'Admin'],
+                    ['Date Completed', item.completedAt ? formatPrintDateTime(item.completedAt) : '-'],
+                    ['Final Status', result]
+                ]
+            });
+        }
+
+        function syncBlotterRecords() {
+            blotters = readBlotterRecords();
+            updateBlotterTable();
+            if (!blotterLogsModal.classList.contains('hidden')) renderBlotterLogs();
+        }
+
+        if (window.BimsRealtime) {
+            BimsRealtime.watch(['bims_blotters'], syncBlotterRecords);
+        }
+
+        window.showAddBlotterModal = showAddBlotterModal;
+        window.closeAddBlotterModal = closeAddBlotterModal;
+        window.showBlotterLogsModal = showBlotterLogsModal;
+        window.closeBlotterLogsModal = closeBlotterLogsModal;
+    </script>
+</body>
+</html>
