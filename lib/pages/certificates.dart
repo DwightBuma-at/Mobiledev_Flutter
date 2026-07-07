@@ -87,6 +87,7 @@ class _CertificatesPageState extends State<CertificatesPage> {
       if (!confirmed) return;
       final claimedAt = nowIso();
       _replace(item.copyWith(status: 'Claimed', claimedAt: claimedAt));
+      _save();
       StorageService.appendLog(
         LogModel(
           key: 'Certificate-${item.id}',
@@ -108,6 +109,7 @@ class _CertificatesPageState extends State<CertificatesPage> {
           ],
         ),
       );
+      return;
     } else {
       _replace(item.copyWith(status: status));
     }

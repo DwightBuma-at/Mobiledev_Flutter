@@ -87,6 +87,7 @@ class _BlotterPageState extends State<BlotterPage> {
       if (!confirmed) return;
       final completedAt = nowIso();
       _replace(item.copyWith(status: 'Completed', completedAt: completedAt));
+      _save();
       StorageService.appendLog(
         LogModel(
           key: 'Blotter-${item.id}',
@@ -113,6 +114,7 @@ class _BlotterPageState extends State<BlotterPage> {
           ],
         ),
       );
+      return;
     } else {
       _replace(item.copyWith(status: status));
     }

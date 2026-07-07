@@ -89,6 +89,7 @@ class _EventsPageState extends State<EventsPage> {
     );
     final index = _events.indexWhere((e) => e.id == item.id);
     if (index != -1) _events[index] = replacement;
+    _save();
     StorageService.appendLog(
       LogModel(
         key: 'Event-${item.id}',
@@ -112,7 +113,6 @@ class _EventsPageState extends State<EventsPage> {
         ],
       ),
     );
-    _save();
   }
 
   void _showLogs() {
